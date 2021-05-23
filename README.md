@@ -13,7 +13,7 @@ int gcd(int a, int b)
 ```
 
 - run
-``` shell
+```
 $ ./prog
-num1  num2
+MyShell $ {int} {int}
 ```
