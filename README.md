@@ -17,3 +17,14 @@ int gcd(int a, int b)
 $ ./prog
 MyShell $ {int} {int}
 ```
+- example
+```
+$ ./prog
+MyShell $ 456 68
+child : 68 48
+parent : 48 20
+child : 20 8
+parent : 8 4
+child solved GCD : 4
+MyShell $
+```
