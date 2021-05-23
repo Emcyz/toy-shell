@@ -9,13 +9,6 @@
 #include <sys/shm.h>
 #include <signal.h>
 
-#define MAX_LEN    255
-"""
-int Euclidean(int a, int b)
-{
-	return a % b ? Euclidean(b, a % b) : b;
-}
-""" //유클리드 호제법
 int main(void)
 {
     int shmid;
