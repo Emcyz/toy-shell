@@ -5,46 +5,100 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#include <signal.h>
 
-#define MAX_LEN_LINE    100
+#define MAX_LEN    255
+
+int Euclidean(int a, int b)
+{
+	return a % b ? Euclidean(b, a % b) : b;
+}
 
 int main(void)
 {
-    char command[MAX_LEN_LINE];
-    char *args[] = {command, NULL};
-    int ret, status;
+    int shmid;
+    void *shmaddr;
+    if((shmid=shmget((key_t)4885, sizeof(int) * 3, IPC_CREAT|0666)) == -1)
+    {
+       perror("shmid failed");
+       exit(1);
+    }
+    if((shmaddr=shmat(shmid, (void *)0, 0)) == (void *)-1)
+    {
+       perror("shmat failed");
+       exit(1);
+    }
+
+    int s;
+    int a;
+    int b;
+    int *shm;
+    shm = (int *)shmaddr;
     pid_t pid, cpid;
-    
-    while (true) {
+    int status;
+    int i = 0;
+
+    while (true)
+    {
+        printf("MyShell $ ");
+        s = fscanf(stdin, "%d %d", &a, &b);
+        if (s == -1)
+        {
+            fprintf(stderr, "fscanf_s failed\n");
+            exit(1);
+        }
         
+        shm[0] = a;
+        shm[1] = b; 
+
         pid = fork();
-        if (pid < 0)
-        { 
+        if (pid < 0) {
             fprintf(stderr, "fork failed\n");
             exit(1);
         } 
-        if (pid != 0)
+        else if (pid != 0)
         {  /* parent */
-            cpid = waitpid(pid, &status, 0);
-            if (cpid != pid)
+            sleep(1);
+            while (shm[2] != 0)
             {
-                fprintf(stderr, "waitpid failed\n");        
+                shm[2] = shm[0] % shm[1];
+                if (shm[2] != 0)
+                {
+                    shm[0] = shm[1];
+                    shm[1] = shm[2];
+                    printf("parent : %d %d\n", shm[0], shm[1]);
+                }
+                else
+                {
+                    printf("parent solved GCD : %d\n", shm[1]);
+                    kill(pid, SIGINT);
+                    printf("Child process terminated\n");
+                }
+                sleep(2);
             }
-            printf("Child process terminated\n");
-            if (WIFEXITED(status))
-            {
-                printf("Exit status is %d\n", WEXITSTATUS(status)); 
-            }
+            printf("parent saw that child did it\n");
         }
         else
         {  /* child */
-            ret = execve(args[0], args, NULL);
-            if (ret < 0)
+            while (1)
             {
-                fprintf(stderr, "execve failed\n");   
-                return 1;
+                shm[2] = shm[0] % shm[1];
+                if (shm[2] != 0)
+                {
+                    shm[0] = shm[1];
+                    shm[1] = shm[2];
+                    printf("child : %d %d\n", shm[0], shm[1]);
+                }
+                else
+                {
+                    printf("child solved GCD : %d\n", shm[1]);
+                    return 1;
+                }
+                sleep(2);
             }
-        } 
+        }
     }
     return 0;
 }
