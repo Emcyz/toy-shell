@@ -67,11 +67,11 @@ int main(void)
                 {
                     printf("parent solved GCD : %d\n", shm[1]);
                     kill(pid, SIGINT);
-                    printf("Child process terminated\n");
+                    printf("parent killed child process\n");
+                    break;
                 }
                 sleep(2);
             }
-            printf("parent saw that child did it\n");
         }
         else
         {  /* child */
